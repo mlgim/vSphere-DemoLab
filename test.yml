@@ -1,0 +1,95 @@
+---
+# -----------------------------------------------------------------------
+# --- Play --------------------------------------------------------------
+# -----------------------------------------------------------------------
+- name: Play - Deploy CentOS VMs
+# hosts:   
+  hosts: all
+  gather_facts: no
+  vars_prompt:
+    - name: "vcpw"
+      prompt: "Enter vCenter password"
+      private: yes
+
+# --- Tasks -------------------------------------------------------------
+  tasks:
+    - name: Create CentOS 7.3 VM
+      vmware_guest:
+        hostname: vc01.ibmps.lan
+        username: Administrator
+        password: "{{ vcpw }}"
+        name: "{{ inventory_hostname }}"
+        validate_certs: no
+        template: CentOS73-Template
+        datacenter: Arrow Viby
+        cluster: IBM Demo
+        annotation: Ansible Deployed
+        folder: MLGIM
+        guest_id: centos64Guest
+        state: poweredon
+        wait_for_ip_address: True
+      register: newvm
+      delegate_to: localhost
+
+    - name: Add the server's hostname to the hosts file
+      lineinfile: dest=/etc/hosts
+        regexp='.*{{ newvm.instance.hw_name }}$'
+        line="{{ newvm.instance.ipv4 }} {{ newvm.instance.hw_name }}"
+        state=present
+      delegate_to: localhost
+    
+    - name: Wait for VMs to allow SSH login
+      pause: 
+        seconds: 30
+      delegate_to: localhost
+
+    - name: Ensure ssh host key known
+      delegate_to: localhost
+      lineinfile:
+        dest: ~/.ssh/known_hosts
+        create: yes
+        state: present
+        line: "{{ lookup('pipe', 'ssh-keyscan -trsa ' + inventory_hostname) }}"
+
+#    - name: Manually add host to /etc/ansible/hosts
+#      lineinfile:
+#        dest: /etc/ansible/hosts
+#        line: "{{ newvm.instance.hw_name }} ansible_host={{ newvm.instance.ipv4 }}" 
+#        insertafter: '\[linux-servers\]'
+#        state: present
+#      delegate_to: localhost
+
+    - name: Add host to in-memory inventory 
+      add_host:
+        hostname: "{{ newvm.instance.hw_name }}"
+        ansible_host: "{{ newvm.instance.ipv4 }}"
+        groups: linux-servers
+      when: newvm.changed
+
+    - name: Set the timezone for the server to be CET
+      command: file state=link /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
+      when: newvm is changed
+
+    - name: Set up a unique hostname
+      hostname: 
+        name: "{{ newvm.instance.hw_name }}"
+      when: newvm is changed
+
+    - name: upgrade all packages, excluding kernel-related packages
+      yum:
+        name: '*'
+        state: latest
+        exclude: kernel*
+
+    - name: ensure a list of packages installed
+      yum:
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - vim
+        - screen
+    
+    - name: "Print name & IP"
+      debug:
+         msg: "iThe VM {{ newvm.instance.hw_name }} has ip {{ newvm.instance.ipv4 }}"
+

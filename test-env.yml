@@ -1,0 +1,63 @@
+---
+# -----------------------------------------------------------------------
+# --- Play --------------------------------------------------------------
+# -----------------------------------------------------------------------
+- name: Play - Deploy Windows 2016 server from template and update it
+# hosts:   
+  hosts: localhost
+  vars_prompt:
+    - name: "vcpw"
+      prompt: "Enter vCenter password"
+      private: yes
+    - name: "vmname"
+      prompt: "Enter VM name-prefix"
+      private: no
+    - name: "count"
+      prompt: "Enter numbers of VMs"
+      private: no
+
+# -----------------------------------------------------------------------
+# --- Tasks -------------------------------------------------------------
+# -----------------------------------------------------------------------
+  tasks:
+    - name: Create CentOS 7.3 VM
+      vmware_guest:
+        hostname: vc01.ibmps.lan
+        username: Administrator
+        password: {{ vcpw }}
+        name: {{ vmname }}
+        validate_certs: no
+        template: CentOS73-Template
+        datacenter: Arrow Viby
+        cluster: IBM Demo
+        annotation: Ansible Deployed
+        folder: MLGIM
+        guest_id: centos64Guest
+        state: poweredon
+        wait_for_ip_address: True
+      register: newvm
+
+    - name: "Print name & IP"
+      debug:
+         msg: "{{ newvm.instance.hw_name }} has ip {{ newvm.instance.ipv4 }}"
+      #with_dict: "{{ newvm }}"
+
+#    - name: Set the timezone for the server to be CET
+#      command: file state=link /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
+#    - name: Set up a unique hostname
+#      hostname: name={{ vmname }}
+    - name: Add the server's domain to the hosts file
+      lineinfile: dest=/etc/hosts
+        regexp='.*{{ newvm.instance.hw_name }}$'
+        line=" {{ newvm.instance.ipv4 }} {{ newvm.instance.hw_name }}"
+        state=present
+      when: newvm.instance.ipv4 is defined
+#    - name: Update packages
+#      apt: update_cache=yes upgrade=dist
+    - name: add host to group with variable 
+      add_host:
+        hostname: "{{ newvm.instance.ipv4 }}"
+        ansible_host: "{{ newvm.instance.hw_name }}"
+        groups: linux-servers
+        my_usage: minio 
+      when: newvm.instance.ipv4 is defined

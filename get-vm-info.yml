@@ -1,0 +1,51 @@
+---
+# -----------------------------------------------------------------------
+# --- Play --------------------------------------------------------------
+# -----------------------------------------------------------------------
+- name: Play - Deploy Windows 2016 server from template and update it
+# hosts:   
+  hosts: localhost
+  vars:
+  vars_prompt:
+    - name: "vcpw"
+      prompt: "Enter vCenter PW"
+      private: no
+    - name: "vmname"
+      prompt: "Enter VM name"
+      private: no
+
+
+# -----------------------------------------------------------------------
+# --- Tasks -------------------------------------------------------------
+# -----------------------------------------------------------------------
+  tasks:
+  - name: Getting some Facts
+    vsphere_guest:
+          vcenter_hostname: vc01.ibmps.lan
+          username: Administrator
+          password: {{ vcpw }}
+#            datacenter: Arrow Viby
+          guest: "{{ vmname }}"
+          vmware_guest_facts: true
+          validate_certs: no
+    register: vmguest_facts
+#    tags: vmfacts
+  - name: debug facts
+    debug: msg="vmguest facts are {{ vmguest_facts }}"
+#    tags: vmfacts
+
+#      - name: get list of facts about virtual machines
+#        vmware_guest_facts:
+#            validate_certs: false
+#            hostname: vc01.ibmps.lan
+#            username: Administrator
+#            password: {{ vcpw }}
+#            datacenter: Arrow Viby
+#            name: '{{ vmname }}'
+            #folder: /vm
+#            delegate_to: localhost
+#            register: guest_facts01
+#      - name: VM info
+#        debug: msg="{{ guest_facts01 }}"
+
+#- debug: msg="{{ guest_facts01['instance']['hw_esxi_host'] }}"

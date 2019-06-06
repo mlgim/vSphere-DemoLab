@@ -1,0 +1,23 @@
+# -----------------------------------------------------------------------
+- name: Play - Deploy CentOS VMs
+# hosts:
+  hosts: all
+  gather_facts: no
+
+# --- Tasks -------------------------------------------------------------
+  tasks:
+    - name: Add or modify DNS A Record
+      nsupdate:
+        server: "10.8.0.11"
+        zone: "ibmps.lan"
+        record: "{{ item }}"
+        value: "10.8.0.209"
+      with_items:
+        - 's3-viby'
+        - "*.s3-viby"
+        - 's3-website-viby'
+        - "*.s3-website-viby"
+        - 's3-admin'
+        - 'cmc'
+      delegate_to: localhost
+

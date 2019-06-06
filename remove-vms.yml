@@ -1,0 +1,58 @@
+---
+# -----------------------------------------------------------------------
+# --- Play --------------------------------------------------------------
+# -----------------------------------------------------------------------
+- name: Play - Remove VMs
+# hosts:   
+  hosts: all
+  gather_facts: no
+  vars_prompt:
+    - name: "vcpw"
+      prompt: "Enter vCenter password"
+      private: yes
+
+# --- Tasks -------------------------------------------------------------
+  tasks:
+    - name: Power off VMs
+      vmware_guest:
+        hostname: vc01.ibmps.lan
+        username: Administrator
+        password: "{{ vcpw }}"
+        name: "{{ inventory_hostname }}"
+        validate_certs: no
+        datacenter: Arrow Viby
+        cluster: IBM Demo
+        folder: MLGIM
+        state: poweredoff
+      delegate_to: localhost
+      ignore_errors: yes
+
+    - name: Remove VMs
+      vmware_guest:
+        hostname: vc01.ibmps.lan
+        username: Administrator
+        password: "{{ vcpw }}"
+        name: "{{ inventory_hostname }}"
+        validate_certs: no
+        datacenter: Arrow Viby
+        cluster: IBM Demo
+        folder: MLGIM
+        state: absent
+      delegate_to: localhost
+      ignore_errors: yes
+
+    - name: Ensure ssh keys are removed known_hosts
+      delegate_to: localhost
+      lineinfile:
+        dest: ~/.ssh/known_hosts
+        create: yes
+        state: absent
+        line: "{{ lookup('pipe', 'ssh-keyscan -trsa ' + inventory_hostname) }}"
+
+    - name: Ensure the server's hostname isn't in /etc/hosts
+      lineinfile: dest=/etc/hosts
+        regexp='.*{{ inventory_hostname }}$'
+        state=absent
+      delegate_to: localhost
+
+

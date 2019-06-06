@@ -1,0 +1,47 @@
+---
+# -----------------------------------------------------------------------
+# --- Play --------------------------------------------------------------
+# -----------------------------------------------------------------------
+- name: Play - Deploy Windows 2016 server from template and update it
+# hosts:   
+  hosts: localhost
+  vars_prompt:
+    - name: "vcpw"
+      prompt: "Enter vCenter password"
+      private: yes
+    - name: "vmname"
+      prompt: "Enter VM name"
+      private: no
+
+# -----------------------------------------------------------------------
+# --- Tasks -------------------------------------------------------------
+# -----------------------------------------------------------------------
+  tasks:
+    - name: Create Win2016 VM
+      vmware_guest:
+        hostname: vc01.ibmps.lan
+        username: Administrator
+        password: '{{ vcpw }}'
+        name: '{{ vmname }}'
+        validate_certs: no
+        template: MLGIM-W2016-Template
+        # Must set 'custimization' variable to activate codeblock in which the custimization_spec is handled. BUG
+        customization:
+            not: important
+        customization_spec: "Default"
+        datacenter: Arrow Viby
+        cluster: IBM Demo
+#       customvalues:
+#         vcpu.hotadd: yes
+#         mem.hotadd:  yes  
+        annotation: Ansible Deployed
+        folder: MLGIM
+        guest_id: windows9Server64Guest
+        state: poweredon
+        wait_for_ip_address: True
+      register: newvm
+
+#    - name: debug facts
+#        debug: msg="vmguest facts are {{ deploy_vm }}"
+#     - name: IP address info
+#         debug: msg="{{ newvm.instance.ipv4 }} {{ vmname }}"

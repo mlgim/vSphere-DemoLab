@@ -1,0 +1,75 @@
+---
+# -----------------------------------------------------------------------
+# --- Play --------------------------------------------------------------
+# -----------------------------------------------------------------------
+- name: Play - Deploy CentOS VMs
+# hosts:   
+  hosts: all
+  gather_facts: no
+  vars_prompt:
+    - name: "vcpw"
+      prompt: "Enter vCenter password"
+      private: yes
+
+# --- Tasks -------------------------------------------------------------
+  tasks:
+    - name: Create CentOS 7.3 VM
+      vmware_guest:
+        hostname: vc01.ibmps.lan
+        username: Administrator
+        password: "{{ vcpw }}"
+        name: "{{ inventory_hostname }}"
+        validate_certs: no
+        template: CentOS73-Template
+        datacenter: Arrow Viby
+        cluster: IBM Demo
+        annotation: Ansible Deployed
+        folder: MLGIM
+        guest_id: centos64Guest
+        networks:
+        - name: VM Network
+          ip: 10.8.0.206
+          netmask: 255.255.248.0
+          gateway: 10.8.0.1
+          domain: ibmps.lan
+          dns_servers:
+          - 10.8.0.11
+          - 10.8.0.12
+        state: poweredon
+        wait_for_ip_address: True
+      register: newvm
+      delegate_to: localhost
+    
+    - name: "Print name & IP"
+      debug:
+         msg: "The VM {{ newvm.instance.hw_name }} has ip {{ newvm.instance.ipv4 }}"
+
+    - name: Add or modify DNS A Record
+      nsupdate:
+        server: "10.8.0.11"
+        zone: "ibmps.lan"
+        record: "{{ newvm.instance.hw_name }}" 
+        value: "{{ newvm.instance.ipv4 }}"
+      delegate_to: localhost
+      
+    - name: Set the timezone for the server to be CET
+      command: file state=link /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
+
+    - name: Set up a unique hostname
+      hostname: 
+        name: "{{ newvm.instance.hw_name }}.ibmps.lan"
+
+    - name: Upgrade all packages, excluding kernel-related packages
+      yum:
+        name: '*'
+        state: latest
+        exclude: kernel*
+
+    - name: Ensure a list of packages are installed
+      yum:
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - vim
+        - screen
+    
