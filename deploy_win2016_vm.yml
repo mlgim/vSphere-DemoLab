@@ -2,7 +2,7 @@
 # -----------------------------------------------------------------------
 # --- Play --------------------------------------------------------------
 # -----------------------------------------------------------------------
-- name: Play - Deploy Windows 2016 server from template and update it
+- name: Play - Deploy Windows 2016 server from template and update it.
 # hosts:   
   hosts: localhost
   vars_prompt:
