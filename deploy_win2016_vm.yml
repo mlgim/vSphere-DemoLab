@@ -41,13 +41,13 @@
         wait_for_ip_address: True
       register: newvm
 
-    - name: Add or modify DNS A Record
-      nsupdate:
-        server: "192.168.100.254"
-        zone: "vlan100.lan"
-        record: "{{ newvm.instance.hw_name }}" 
-        value: "{{ newvm.instance.ipv4 }}"
-      delegate_to: localhost
+#    - name: Add or modify DNS A Record
+#      nsupdate:
+#        server: "192.168.100.254"
+#        zone: "vlan100.lan"
+#        record: "{{ newvm.instance.hw_name }}" 
+#        value: "{{ newvm.instance.ipv4 }}"
+#      delegate_to: localhost
       
 #    - name: debug facts
 #        debug: msg="vmguest facts are {{ deploy_vm }}"
