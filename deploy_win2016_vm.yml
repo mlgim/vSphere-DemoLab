@@ -5,13 +5,13 @@
 - name: Play - Deploy Windows 2016 server from template and update it.
 # hosts:   
   hosts: localhost
-  vars_prompt:
-    - name: "vcpw"
-      prompt: "Enter vCenter password"
-      private: yes
-    - name: "vmname"
-      prompt: "Enter VM name"
-      private: no
+#  vars_prompt:
+#    - name: "vcpw"
+#      prompt: "Enter vCenter password"
+#      private: yes
+#    - name: "vmname"
+#      prompt: "Enter VM name"
+#      private: no
 
 # -----------------------------------------------------------------------
 # --- Tasks -------------------------------------------------------------
