@@ -24,7 +24,7 @@
         password: '{{ vcpw }}'
         name: '{{ vmname }}'
         validate_certs: no
-        template: MLGIM-W2016-Template
+        template: MLGIM100-W2016-Template
         # Must set 'custimization' variable to activate codeblock in which the custimization_spec is handled. BUG
         customization:
             not: important
@@ -35,7 +35,7 @@
 #         vcpu.hotadd: yes
 #         mem.hotadd:  yes  
         annotation: Ansible Deployed
-        folder: MLGIM
+        folder: /MLGIM/VLAN100
         guest_id: windows9Server64Guest
         state: poweredon
         wait_for_ip_address: True
